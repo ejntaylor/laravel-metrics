@@ -12,12 +12,15 @@ class LaravelMetrics
 
     protected int $dayGrouping = 7;
 
+    protected ?Model $parentModel = null;
+
     public const FORMAT_DEFAULT = 'default';
 
     public const FORMAT_GQL = 'graphQL';
 
     public function __construct()
     {
+        $this->parentModel = app(config('metrics.parent'));
         $this->setMetrics(config('metrics.metrics'));
     }
 
@@ -47,7 +50,7 @@ class LaravelMetrics
 
     public function reportRows(
         $format = self::FORMAT_DEFAULT,
-        ?Model $platform = null
+        ?Model $parentModel = null
     ): array {
         $rows = [];
 
@@ -58,16 +61,16 @@ class LaravelMetrics
             $valuePrevious = $metric->getHistoricalValueSum(
                 $endOfToday->copy()->subDays($this->dayGrouping * 2),
                 $endOfToday->copy()->subDays($this->dayGrouping),
-                $platform
+                $parentModel
             );
 
             $value = $metric->getHistoricalValueSum(
                 $endOfToday->copy()->subDays($this->dayGrouping),
                 $endOfToday,
-                $platform
+                $parentModel
             );
 
-            $total = $metric->getLatestTotal($platform);
+            $total = $metric->getLatestTotal($parentModel);
 
             $rows[] = match ($format) {
                 self::FORMAT_GQL => [
@@ -91,24 +94,24 @@ class LaravelMetrics
     }
 
     public function getReportPlatform(
-        Model $platform,
+        Model $parentModel,
         $format = self::FORMAT_DEFAULT,
     ): array {
         return
             [
-                'platform' => $platform->name,
-                'metrics' => $this->reportRows($format, $platform),
+                'platform' => $parentModel->name,
+                'metrics' => $this->reportRows($format, $parentModel),
             ];
     }
 
     public function getReportPlatforms(
-        ?Collection $platforms = null,
+        ?Collection $parentModels = null,
         $format = self::FORMAT_DEFAULT,
     ): array {
-        $platforms = $platforms ?? Platform::all();
+        $parentModels = $parentModels ?? $this->parentModel::all();
 
-        return $platforms->flatMap(
-            fn($platform) => [$this->getReportPlatform($platform, $format)]
+        return $parentModels->flatMap(
+            fn($parentModel) => [$this->getReportPlatform($parentModel, $format)]
         )->toArray();
     }
 
@@ -119,12 +122,12 @@ class LaravelMetrics
     }
 
     public function getReportPlatformsFormatted(
-        ?Collection $platforms = null,
+        ?Collection $parentModels = null,
         $format = self::FORMAT_DEFAULT,
     ): string {
-        $platforms = $platforms ?? Platform::all();
+        $parentModels = $parentModels ?? $this->parentModel::all();
 
-        return json_encode($this->getReportPlatforms($platforms, $format), JSON_THROW_ON_ERROR);
+        return json_encode($this->getReportPlatforms($parentModels, $format), JSON_THROW_ON_ERROR);
     }
 
     public static function getDifference($from, $to): float
