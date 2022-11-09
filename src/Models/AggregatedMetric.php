@@ -32,6 +32,6 @@ class AggregatedMetric extends Model
 
     public function platform(): BelongsTo
     {
-        return $this->belongsTo(config('parent'));
+        return $this->belongsTo(config('metrics.parent'));
     }
 }
