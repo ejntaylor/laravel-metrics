@@ -3,6 +3,9 @@
 return [
 
     /** This sets a top parent Model to use */
-    'parent' => ''
+    'parent' => '',
+
+    /** Metrics to use */
+    'metrics' => []
 
 ];
