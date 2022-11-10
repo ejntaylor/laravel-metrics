@@ -30,7 +30,7 @@ abstract class Metric
                 'key' => $this->key(),
                 'value' => $this->countFromQuery(),
                 'total' => $this->countFromQuery(filterCountByDateColumn: false),
-                'platform_id' => null,
+                'parent_id' => null,
             ];
 
             return collect(AggregatedMetric::create($params));
@@ -41,7 +41,7 @@ abstract class Metric
                 'key' => $this->key(),
                 'value' => $this->countFromQuery(),
                 'total' => $this->countFromQuery(filterCountByDateColumn: false),
-                'platform_id' => $parent->id,
+                'parent_id' => $parent->id,
             ];
 
             return AggregatedMetric::create($params);
@@ -70,7 +70,7 @@ abstract class Metric
             ->where('key', $this->key());
 
         if ($parentModel) {
-            $query->whereRelation('platform', 'platform_id', '=', $parentModel->id);
+            $query->whereRelation('platform', 'parent_id', '=', $parentModel->id);
         }
 
         return $query->sum('value');
@@ -84,7 +84,7 @@ abstract class Metric
             ->orderBy('created_at', 'desc');
 
         if ($parentModel) {
-            $query->whereRelation('platform', 'platform_id', '=', $parentModel->id);
+            $query->whereRelation('platform', 'parent_id', '=', $parentModel->id);
         }
 
         return $query->limit(1)->value('total');
@@ -98,13 +98,13 @@ abstract class Metric
 
         return $this->query()
             ->whereHas('platform', function ($query) use ($parentModel) {
-                $query->where('platform_id', '=', $parentModel->id);
+                $query->where('parent_id', '=', $parentModel->id);
             })
             ->orWhereHas('application', function ($query) use ($parentModel) {
-                $query->where('application.platform_id', '=', $parentModel->id);
+                $query->where('application.parent_id', '=', $parentModel->id);
             })
             ->orWhereHas('repository', function ($query) use ($parentModel) {
-                $query->where('repository.application.platform_id', '=', $parentModel->id);
+                $query->where('repository.application.parent_id', '=', $parentModel->id);
             });
     }
 }

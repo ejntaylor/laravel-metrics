@@ -2,6 +2,7 @@
 
 namespace Ejntaylor\LaravelMetrics\Models;
 
+use Ejntaylor\LaravelMetrics\Database\Factories\AggregatedMetricFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,11 +18,13 @@ class AggregatedMetric extends Model
 {
     use HasFactory;
 
+    protected $table = 'metrics';
+
     protected $fillable = [
         'key',
         'value',
         'total',
-        'platform_id',
+        'parent_id',
         'created_at',
     ];
 
@@ -33,5 +36,10 @@ class AggregatedMetric extends Model
     public function platform(): BelongsTo
     {
         return $this->belongsTo(config('metrics.parent'));
+    }
+
+    protected static function newFactory()
+    {
+        return AggregatedMetricFactory::new();
     }
 }
